@@ -27,32 +27,6 @@ The server runs at `http://localhost:3000` by default. Set the `PORT` environmen
 2. Type a word (e.g. `rust`, `ai`, `typescript`) and click **Search**
 3. See all Hacker News stories from today that mention that word
 
-## API
-
-```
-GET /api/search?word=<term>
-```
-
-Returns JSON:
-
-```json
-{
-  "word": "rust",
-  "date": "2026-03-22",
-  "count": 5,
-  "stories": [
-    {
-      "id": 12345,
-      "title": "Story title",
-      "url": "https://example.com",
-      "by": "author",
-      "time": 1711100000,
-      "score": 42
-    }
-  ]
-}
-```
-
 ## Development
 
 ```bash
@@ -79,10 +53,8 @@ The project uses ESLint with `@typescript-eslint/parser` and `@typescript-eslint
 ```
 wordnews/
 ├── src/
-│   ├── server.ts    # Express server with /api/search endpoint
+│   ├── server.ts    # Express server with server-rendered HTML
 │   └── hn.ts        # Hacker News search module (Algolia API)
-├── public/
-│   └── index.html   # Frontend UI
 ├── eslint.config.mjs
 ├── tsconfig.json
 └── package.json
