@@ -1,0 +1,31 @@
+{
+  "name": "wordnews",
+  "version": "1.0.0",
+  "description": "Search Hacker News daily for mentions of a specific word",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc --watch & node --watch dist/server.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:34499/git/Wilfred/wordnews"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.1",
+    "@typescript-eslint/parser": "^8.57.1",
+    "eslint": "^10.1.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1"
+  }
+}
