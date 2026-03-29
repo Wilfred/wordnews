@@ -7,6 +7,7 @@ export interface MatchedStory {
   by: string;
   time: number;
   score: number;
+  permalink: string;
 }
 
 function fetchJSON<T>(url: string): Promise<T> {
@@ -64,5 +65,6 @@ export async function searchHN(word: string): Promise<MatchedStory[]> {
       by: hit.author,
       time: hit.created_at_i,
       score: hit.points,
+      permalink: `https://news.ycombinator.com/item?id=${hit.objectID}`,
     }));
 }
