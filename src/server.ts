@@ -1,5 +1,6 @@
 import express from "express";
 import { searchHN, MatchedStory } from "./hn";
+import { searchReddit } from "./reddit";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,8 +19,22 @@ function renderStory(s: MatchedStory): string {
     <div class="story">
       <div class="story-title"><a href="${escapeHtml(s.url)}">${escapeHtml(s.title)}</a></div>
       <div class="story-meta">${s.score} points by ${escapeHtml(s.by)} at ${time} &middot;
-        <a href="https://news.ycombinator.com/item?id=${s.id}">comments</a></div>
+        <a href="${escapeHtml(s.permalink)}">comments</a></div>
     </div>`;
+}
+
+function renderSection(title: string, stories: MatchedStory[], word: string, date: string): string {
+  if (stories.length === 0) {
+    return `<div class="section">
+      <h2 class="section-title">${escapeHtml(title)}</h2>
+      <div class="empty">No mentions of &ldquo;<strong>${escapeHtml(word)}</strong>&rdquo; found today (${date}).</div>
+    </div>`;
+  }
+  return `<div class="section">
+    <h2 class="section-title">${escapeHtml(title)}</h2>
+    <p class="info">Found <strong>${stories.length}</strong> mentions:</p>
+    ${stories.map(renderStory).join("")}
+  </div>`;
 }
 
 function renderPage(word: string, results: string): string {
@@ -28,7 +43,7 @@ function renderPage(word: string, results: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WordNews – Hacker News Word Tracker</title>
+  <title>WordNews – Word Tracker</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f6f6ef; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
@@ -44,13 +59,15 @@ function renderPage(word: string, results: string): string {
     .story-title a { color: #333; text-decoration: none; font-weight: 500; }
     .story-title a:hover { color: #ff6600; }
     .story-meta { font-size: 13px; color: #888; margin-top: 4px; }
+    .section { margin-bottom: 24px; }
+    .section-title { font-size: 18px; color: #555; border-bottom: 2px solid #ddd; padding-bottom: 6px; margin-bottom: 12px; }
     .empty { text-align: center; padding: 40px; color: #888; }
     .error { color: #d32f2f; padding: 12px; background: #ffeaea; border-radius: 6px; }
   </style>
 </head>
 <body>
   <h1>WordNews</h1>
-  <p class="subtitle">Search today's Hacker News stories for any word</p>
+  <p class="subtitle">Search today's Hacker News and Reddit posts for any word</p>
   <form method="get" action="/">
     <input type="text" name="word" placeholder="Enter a word (e.g. rust, ai, typescript)" value="${escapeHtml(word)}" />
     <button type="submit">Search</button>
@@ -69,22 +86,22 @@ app.get("/", async (req, res) => {
   }
 
   try {
-    const stories = await searchHN(word);
+    const [hnStories, redditStories] = await Promise.all([
+      searchHN(word),
+      searchReddit(word),
+    ]);
     const date = new Date().toISOString().slice(0, 10);
+    const total = hnStories.length + redditStories.length;
 
-    if (stories.length === 0) {
-      res.send(renderPage(word,
-        `<div class="empty">No stories mentioning &ldquo;<strong>${escapeHtml(word)}</strong>&rdquo; found on HN today (${date}).</div>`));
-      return;
-    }
+    const summaryHtml = `<p class="info">Found <strong>${total}</strong> mentions of &ldquo;<strong>${escapeHtml(word)}</strong>&rdquo; today (${date}):</p>`;
+    const hnHtml = renderSection("Hacker News", hnStories, word, date);
+    const redditHtml = renderSection("Reddit", redditStories, word, date);
 
-    const storiesHtml = stories.map(renderStory).join("");
-    res.send(renderPage(word,
-      `<p class="info">Found <strong>${stories.length}</strong> stories mentioning &ldquo;<strong>${escapeHtml(word)}</strong>&rdquo; today (${date}):</p>${storiesHtml}`));
+    res.send(renderPage(word, `${summaryHtml}${hnHtml}${redditHtml}`));
   } catch (err) {
-    console.error("HN search failed:", err);
+    console.error("Search failed:", err);
     res.send(renderPage(word,
-      `<div class="error">Failed to fetch from Hacker News. Please try again.</div>`));
+      `<div class="error">Failed to fetch results. Please try again.</div>`));
   }
 });
 
